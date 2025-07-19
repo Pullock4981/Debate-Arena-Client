@@ -1,6 +1,7 @@
 
 import Navbar from "@/components/Navbar";
 import "./globals.css";
+import Footer from "@/components/Footer";
 
 export const metadata = {
   title: 'Debate Arena',
@@ -16,6 +17,7 @@ export default function RootLayout({ children }) {
         </header>
         
         <main>{children}</main>
+        <Footer></Footer>
       </body>
     </html>
   );
