@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
+    const router = useRouter();
 
     return (
         <nav className="bg-white dark:bg-gray-900 shadow">
@@ -50,7 +52,10 @@ export default function Navbar() {
 
                     {/* Login button */}
                     <div className="hidden sm:flex sm:items-center">
-                        <button className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition">
+                        <button
+                            onClick={() => router.push("/login")}
+                            className="bg-indigo-600 text-white px-4 py-2 cursor-pointer rounded-md text-sm font-medium hover:bg-indigo-700 transition"
+                        >
                             Login
                         </button>
                     </div>
@@ -126,11 +131,11 @@ export default function Navbar() {
                             Scoreboard
                         </Link>
                         <button
-                            className="w-full text-left bg-indigo-600 text-white px-3 py-2 rounded-md text-base font-medium hover:bg-indigo-700 transition"
                             onClick={() => {
                                 setIsOpen(false);
-                                // login logic here
+                                router.push("/login");
                             }}
+                            className="w-full text-left bg-indigo-600 text-white px-3 py-2 rounded-md text-base font-medium hover:bg-indigo-700 transition"
                         >
                             Login
                         </button>
