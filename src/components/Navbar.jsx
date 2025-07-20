@@ -43,10 +43,10 @@ export default function Navbar() {
                             Debate List
                         </Link>
                         <Link
-                            href="/argument-posting"
+                            href="/joinedDebate"
                             className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-md text-sm font-medium"
                         >
-                            Argument Posting
+                            Joined Debate
                         </Link>
                         <Link
                             href="/scoreboard"
