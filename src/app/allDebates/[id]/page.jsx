@@ -1,19 +1,22 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 export default function DebateDetailsPage() {
     const { id } = useParams();
+    const router = useRouter();
+
     const [debate, setDebate] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [joinedSide, setJoinedSide] = useState(null);
-    const [userName, setUserName] = useState("");
+    const [joining, setJoining] = useState(false);
 
     useEffect(() => {
         if (!id) return;
+
         const fetchDebate = async () => {
             try {
                 const res = await fetch(`http://localhost:5000/debates/${id}`);
+                if (!res.ok) throw new Error("Debate not found");
                 const data = await res.json();
                 setDebate(data);
             } catch (error) {
@@ -24,29 +27,13 @@ export default function DebateDetailsPage() {
         };
 
         fetchDebate();
-    }, [id, joinedSide]); // refetch on join
+    }, [id]);
 
     const handleJoin = async (side) => {
         const name = prompt("Enter your name to join:");
+        if (!name) return alert("Name is required");
 
-        if (!name) {
-            alert("Name is required to join.");
-            return;
-        }
-
-        // Prevent joining both sides
-        const inSupport = debate.support?.includes(name);
-        const inOppose = debate.oppose?.includes(name);
-
-        if ((side === "Support" && inOppose) || (side === "Oppose" && inSupport)) {
-            alert("You already joined the other side. Cannot join both.");
-            return;
-        }
-
-        if ((side === "Support" && inSupport) || (side === "Oppose" && inOppose)) {
-            alert(`You already joined as ${side}.`);
-            return;
-        }
+        setJoining(true);
 
         try {
             const res = await fetch(`http://localhost:5000/debates/${id}/join`, {
@@ -58,21 +45,22 @@ export default function DebateDetailsPage() {
             const result = await res.json();
 
             if (!res.ok) {
-                alert(result.error || "Failed to join debate.");
-                return;
+                setJoining(false);
+                return alert(result.error || "Failed to join.");
             }
 
-            alert(result.message);
-            setUserName(name);
-            setJoinedSide(side);
+            // ✅ Redirect to the joined page
+            router.push(`/joinedDebate?name=${encodeURIComponent(name)}&debateId=${id}`);
         } catch (error) {
             console.error("Join error:", error);
             alert("Error joining debate.");
+        } finally {
+            setJoining(false);
         }
     };
 
     if (loading) return <p className="text-center py-10">Loading...</p>;
-    if (!debate) return <p className="text-center py-10">Debate not found.</p>;
+    if (!debate) return <p className="text-center py-10 text-red-500">Debate not found.</p>;
 
     return (
         <div className="max-w-4xl mx-auto px-4 py-10">
@@ -85,29 +73,22 @@ export default function DebateDetailsPage() {
                 <p className="text-sm text-gray-500 mb-1"><strong>Tags:</strong> {Array.isArray(debate.tags) ? debate.tags.join(", ") : debate.tags}</p>
             </div>
 
-            {!joinedSide ? (
-                <div className="flex gap-4 justify-center">
-                    <button
-                        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-                        onClick={() => handleJoin("Support")}
-                    >
-                        Join as Support
-                    </button>
-                    <button
-                        className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-                        onClick={() => handleJoin("Oppose")}
-                    >
-                        Join as Oppose
-                    </button>
-                </div>
-            ) : (
-                <p className="text-center text-xl font-semibold mt-4">
-                    👤 {userName}, you joined as{" "}
-                    <span className={joinedSide === "Support" ? "text-green-600" : "text-red-600"}>
-                        {joinedSide}
-                    </span>
-                </p>
-            )}
+            <div className="flex gap-4 justify-center">
+                <button
+                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
+                    onClick={() => handleJoin("Support")}
+                    disabled={joining}
+                >
+                    {joining ? "Joining..." : "Join as Support"}
+                </button>
+                <button
+                    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 disabled:opacity-50"
+                    onClick={() => handleJoin("Oppose")}
+                    disabled={joining}
+                >
+                    {joining ? "Joining..." : "Join as Oppose"}
+                </button>
+            </div>
         </div>
     );
 }

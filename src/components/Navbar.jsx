@@ -3,10 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSession, signIn, signOut } from "next-auth/react";
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
     const router = useRouter();
+    const { data: session } = useSession();
 
     return (
         <nav className="bg-white dark:bg-gray-900 shadow">
@@ -14,10 +16,7 @@ export default function Navbar() {
                 <div className="flex justify-between h-16">
                     {/* Logo */}
                     <div className="flex-shrink-0 flex items-center">
-                        <Link
-                            href="/"
-                            className="text-xl font-bold text-indigo-600 dark:text-indigo-400"
-                        >
+                        <Link href="/" className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
                             DebateArena
                         </Link>
                     </div>
@@ -42,28 +41,37 @@ export default function Navbar() {
                         >
                             Debate List
                         </Link>
-                        <Link
-                            href="/joinedDebate"
-                            className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-md text-sm font-medium"
-                        >
-                            Joined Debate
-                        </Link>
-                        <Link
-                            href="/scoreboard"
-                            className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-md text-sm font-medium"
-                        >
-                            Scoreboard
-                        </Link>
                     </div>
 
-                    {/* Login button */}
-                    <div className="hidden sm:flex sm:items-center">
-                        <button
-                            onClick={() => router.push("/login")}
-                            className="bg-indigo-600 text-white px-4 py-2 cursor-pointer rounded-md text-sm font-medium hover:bg-indigo-700 transition"
-                        >
-                            Login
-                        </button>
+                    {/* Auth buttons */}
+                    <div className="hidden sm:flex sm:items-center space-x-4">
+                        {session?.user ? (
+                            <>
+                                {session.user.image && (
+                                    <img
+                                        src={session.user.image}
+                                        alt="User Avatar"
+                                        className="w-8 h-8 rounded-full"
+                                    />
+                                )}
+                                <p className="text-sm text-gray-700 dark:text-gray-300">
+                                    Hello, {session.user.name.split(" ")[0]}
+                                </p>
+                                <button
+                                    onClick={() => signOut()}
+                                    className="bg-red-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-600 transition"
+                                >
+                                    Logout
+                                </button>
+                            </>
+                        ) : (
+                            <button
+                                onClick={() => signIn("google")}
+                                className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition"
+                            >
+                                Login
+                            </button>
+                        )}
                     </div>
 
                     {/* Mobile menu button */}
@@ -116,35 +124,41 @@ export default function Navbar() {
                             Home
                         </Link>
                         <Link
-                            href="/debate-creation"
+                            href="/createDebate"
                             onClick={() => setIsOpen(false)}
                             className="block text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-md text-base font-medium"
                         >
                             Debate Creation
                         </Link>
                         <Link
-                            href="/argument-posting"
+                            href="/allDebates"
                             onClick={() => setIsOpen(false)}
                             className="block text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-md text-base font-medium"
                         >
-                            Argument Posting
+                            Debate List
                         </Link>
-                        <Link
-                            href="/scoreboard"
-                            onClick={() => setIsOpen(false)}
-                            className="block text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-md text-base font-medium"
-                        >
-                            Scoreboard
-                        </Link>
-                        <button
-                            onClick={() => {
-                                setIsOpen(false);
-                                router.push("/login");
-                            }}
-                            className="w-full text-left bg-indigo-600 text-white px-3 py-2 rounded-md text-base font-medium hover:bg-indigo-700 transition"
-                        >
-                            Login
-                        </button>
+
+                        {session?.user ? (
+                            <button
+                                onClick={() => {
+                                    setIsOpen(false);
+                                    signOut();
+                                }}
+                                className="w-full text-left bg-red-500 text-white px-3 py-2 rounded-md text-base font-medium hover:bg-red-600 transition"
+                            >
+                                Logout
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => {
+                                    setIsOpen(false);
+                                    signIn("google");
+                                }}
+                                className="w-full text-left bg-indigo-600 text-white px-3 py-2 rounded-md text-base font-medium hover:bg-indigo-700 transition"
+                            >
+                                Login
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
