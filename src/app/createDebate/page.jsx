@@ -37,7 +37,7 @@ export default function DebateCreatePage() {
                 tags: data.tags.split(",").map((tag) => tag.trim()),
             };
 
-            const res = await fetch("http://localhost:5000/debates", {
+            const res = await fetch("https://data-arena-server.onrender.com/.app/debates", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(debateData),

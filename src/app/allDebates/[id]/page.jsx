@@ -1,23 +1,24 @@
-"use client";
+'use client';
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import DebateSummary from "@/components/DebateSummary";
+// import DebateSummary from "@/app/components/DebateSummary";
 
 export default function DebateDetailsPage() {
-    const { id } = useParams(); // get debate ID from the URL
+    const { id } = useParams();
     const router = useRouter();
 
     const [debate, setDebate] = useState(null);
     const [loading, setLoading] = useState(true);
     const [joining, setJoining] = useState(false);
 
-    // Fetch debate data from the server
     useEffect(() => {
         if (!id) return;
 
         const fetchDebate = async () => {
             try {
-                const res = await fetch(`http://localhost:5000/debates/${id}`);
+                const res = await fetch(`https://data-arena-server.onrender.com/.app/debates/${id}`);
                 if (!res.ok) throw new Error("Debate not found");
                 const data = await res.json();
                 setDebate(data);
@@ -31,12 +32,10 @@ export default function DebateDetailsPage() {
         fetchDebate();
     }, [id]);
 
-    // Handle joining logic and save to localStorage with validation
     const handleJoin = async (side) => {
         const name = prompt("Enter your name to join:");
         if (!name) return alert("Name is required");
 
-        // Check if user already joined this debate (with the same name)
         const joined = JSON.parse(localStorage.getItem("joinedDebates") || "[]");
         const existing = joined.find(
             (entry) => entry.debateId === id && entry.name === name
@@ -55,7 +54,7 @@ export default function DebateDetailsPage() {
         setJoining(true);
 
         try {
-            const res = await fetch(`http://localhost:5000/debates/${id}/join`, {
+            const res = await fetch(`https://data-arena-server.onrender.com/.app/debates/${id}/join`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name, side }),
@@ -66,7 +65,6 @@ export default function DebateDetailsPage() {
                 return alert(result.error || "Failed to join.");
             }
 
-            // Save joined info in localStorage
             joined.push({
                 name,
                 debateId: id,
@@ -75,7 +73,6 @@ export default function DebateDetailsPage() {
             });
             localStorage.setItem("joinedDebates", JSON.stringify(joined));
 
-            // Redirect to the joined debates page
             router.push("/joinedDebate");
         } catch (error) {
             console.error("Join error:", error);
@@ -95,7 +92,7 @@ export default function DebateDetailsPage() {
             <div className="p-6 border rounded shadow bg-white mb-10">
                 <p className="text-gray-700 mb-2">{debate.description}</p>
                 <p className="text-sm text-gray-500"><strong>Category:</strong> {debate.category}</p>
-                <p className="text-sm text-gray-500"><strong>Duration:</strong> {debate.duration}</p>
+                <p className="text-sm text-gray-500"><strong>Duration:</strong> {debate.duration} minutes</p>
                 <p className="text-sm text-gray-500">
                     <strong>Tags:</strong> {Array.isArray(debate.tags) ? debate.tags.join(", ") : debate.tags}
                 </p>
@@ -117,6 +114,13 @@ export default function DebateDetailsPage() {
                     {joining ? "Joining..." : "Join as Oppose"}
                 </button>
             </div>
+
+            {/* ✅ Injected Debate Summary Below */}
+            <DebateSummary
+                debateId={id}
+                createdAt={debate.createdAt}
+                duration={debate.duration}
+            />
         </div>
     );
 }

@@ -12,7 +12,7 @@ export default function DebatesPage() {
     useEffect(() => {
         const fetchDebates = async () => {
             try {
-                const res = await fetch("http://localhost:5000/debates");
+                const res = await fetch("https://data-arena-server.onrender.com/.app/debates");
                 const data = await res.json();
                 setDebates(data);
             } catch (error) {
