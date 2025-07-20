@@ -1,61 +1,53 @@
 "use client";
+
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 
 export default function JoinedDebatePage() {
-    const searchParams = useSearchParams();
-    const userName = searchParams.get("name");
-    const debateId = searchParams.get("debateId");
+    const [joinedDebates, setJoinedDebates] = useState([]);
 
-    const [joinedDebate, setJoinedDebate] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-
+    // Load joined debates from localStorage
     useEffect(() => {
-        if (!userName || !debateId) return;
+        const saved = JSON.parse(localStorage.getItem("joinedDebates") || "[]");
+        setJoinedDebates(saved);
+    }, []);
 
-        const fetchJoinedDebate = async () => {
-            try {
-                const res = await fetch(`http://localhost:5000/joinedDebates?name=${encodeURIComponent(userName)}&debateId=${debateId}`);
-                if (!res.ok) {
-                    const err = await res.json();
-                    throw new Error(err.error || "Joined debate not found");
-                }
-                const data = await res.json();
-
-                setJoinedDebate(data);
-            } catch (err) {
-                console.error("Fetch error:", err);
-                setError(err.message || "Failed to fetch joined debate");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchJoinedDebate();
-    }, [userName, debateId]);
-
-    if (!userName || !debateId) return <p className="text-center py-10">Waiting for route params...</p>;
-    if (loading) return <p className="text-center py-10">Loading...</p>;
-    if (error) return <p className="text-center py-10 text-red-500">{error}</p>;
-    if (!joinedDebate) return <p className="text-center py-10">No debate data.</p>;
+    // Optional: clear joined debates
+    const clearDebates = () => {
+        localStorage.removeItem("joinedDebates");
+        setJoinedDebates([]);
+    };
 
     return (
-        <div className="max-w-3xl mx-auto py-10 px-4">
-            <h1 className="text-3xl font-bold mb-4">Your Joined Debate</h1>
-            <div className="bg-white shadow rounded p-6 border">
-                <p><strong>Title:</strong> {joinedDebate.title}</p>
-                <p><strong>Description:</strong> {joinedDebate.description}</p>
-                <p><strong>Category:</strong> {joinedDebate.category}</p>
-                <p><strong>Duration:</strong> {joinedDebate.duration}</p>
-                <p><strong>Tags:</strong> {Array.isArray(joinedDebate.tags) ? joinedDebate.tags.join(", ") : joinedDebate.tags}</p>
-                <p className="mt-4">
-                    👤 You ({joinedDebate.name}) joined as:{" "}
-                    <span className={joinedDebate.side === "Support" ? "text-green-600" : "text-red-600"}>
-                        {joinedDebate.side}
-                    </span>
-                </p>
-            </div>
+        <div className="max-w-2xl mx-auto p-6 mt-10 bg-white shadow rounded">
+            <h1 className="text-2xl font-bold mb-6 text-center">Your Joined Debates</h1>
+
+            {joinedDebates.length === 0 ? (
+                <p className="text-gray-600 text-center">You haven’t joined any debates yet.</p>
+            ) : (
+                <ul className="space-y-4">
+                    {joinedDebates.map((debate, index) => (
+                        <li key={index} className="border rounded p-4 bg-gray-50">
+                            <p><strong>Name:</strong> {debate.name}</p>
+                            <p><strong>Debate ID:</strong> {debate.debateId}</p>
+                            <p><strong>Side:</strong> {debate.side}</p>
+                            <p className="text-sm text-gray-500">
+                                <strong>Joined at:</strong> {new Date(debate.joinedAt).toLocaleString()}
+                            </p>
+                        </li>
+                    ))}
+                </ul>
+            )}
+
+            {joinedDebates.length > 0 && (
+                <div className="text-center mt-6">
+                    <button
+                        onClick={clearDebates}
+                        className="text-red-500 hover:text-red-700 text-sm underline"
+                    >
+                        Clear All Joined Debates
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
