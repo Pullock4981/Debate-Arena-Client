@@ -31,10 +31,26 @@ export default function DebateDetailsPage() {
         fetchDebate();
     }, [id]);
 
-    // Handle joining logic and save to localStorage
+    // Handle joining logic and save to localStorage with validation
     const handleJoin = async (side) => {
         const name = prompt("Enter your name to join:");
         if (!name) return alert("Name is required");
+
+        // Check if user already joined this debate (with the same name)
+        const joined = JSON.parse(localStorage.getItem("joinedDebates") || "[]");
+        const existing = joined.find(
+            (entry) => entry.debateId === id && entry.name === name
+        );
+
+        if (existing) {
+            if (existing.side === side) {
+                alert(`You have already joined this debate as ${side}.`);
+                return;
+            } else {
+                alert("You cannot join both sides in the same debate.");
+                return;
+            }
+        }
 
         setJoining(true);
 
@@ -50,8 +66,7 @@ export default function DebateDetailsPage() {
                 return alert(result.error || "Failed to join.");
             }
 
-            // ✅ Save joined info in localStorage
-            const joined = JSON.parse(localStorage.getItem("joinedDebates") || "[]");
+            // Save joined info in localStorage
             joined.push({
                 name,
                 debateId: id,
@@ -60,7 +75,7 @@ export default function DebateDetailsPage() {
             });
             localStorage.setItem("joinedDebates", JSON.stringify(joined));
 
-            // ✅ Redirect to the joined debates page
+            // Redirect to the joined debates page
             router.push("/joinedDebate");
         } catch (error) {
             console.error("Join error:", error);
@@ -81,7 +96,9 @@ export default function DebateDetailsPage() {
                 <p className="text-gray-700 mb-2">{debate.description}</p>
                 <p className="text-sm text-gray-500"><strong>Category:</strong> {debate.category}</p>
                 <p className="text-sm text-gray-500"><strong>Duration:</strong> {debate.duration}</p>
-                <p className="text-sm text-gray-500"><strong>Tags:</strong> {Array.isArray(debate.tags) ? debate.tags.join(", ") : debate.tags}</p>
+                <p className="text-sm text-gray-500">
+                    <strong>Tags:</strong> {Array.isArray(debate.tags) ? debate.tags.join(", ") : debate.tags}
+                </p>
             </div>
 
             <div className="flex gap-4 justify-center">

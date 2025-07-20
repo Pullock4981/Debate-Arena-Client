@@ -15,6 +15,7 @@ export default function Navbar() {
         { href: "/createDebate", label: "Debate Creation" },
         { href: "/allDebates", label: "Debate List" },
         { href: "/joinedDebate", label: "Joined Debate" },
+        { href: "/leaderboard", label: "Leaderboard" },
     ];
 
     const getLinkClasses = (href) => {

@@ -13,7 +13,25 @@ export default function JoinedDebatePage() {
 
     useEffect(() => {
         const saved = JSON.parse(localStorage.getItem("joinedDebates") || "[]");
-        setJoinedDebates(saved);
+
+        // Parse duration string (e.g. "1h", "12h") to minutes number for each debate
+        const parsedDebates = saved.map((debate) => {
+            let durationMin = 0;
+            if (debate.duration) {
+                if (debate.duration.endsWith("h")) {
+                    durationMin = parseInt(debate.duration) * 60;
+                } else {
+                    durationMin = parseInt(debate.duration);
+                }
+            }
+            return {
+                ...debate,
+                durationMin,
+                startTime: debate.startTime ? new Date(debate.startTime).getTime() : Date.now(),
+            };
+        });
+
+        setJoinedDebates(parsedDebates);
 
         const args = JSON.parse(localStorage.getItem("arguments") || "[]");
         setArgumentsList(args);
@@ -27,7 +45,8 @@ export default function JoinedDebatePage() {
         setJoinedDebates([]);
     };
 
-    const handlePostArgument = (debateId, side, name) => {
+    const handlePostArgument = (debateId, side, name, isClosed) => {
+        if (isClosed) return; // disable posting if debate closed
         router.push(
             `/postArgument?debateId=${debateId}&side=${side}&name=${encodeURIComponent(name)}`
         );
@@ -58,9 +77,9 @@ export default function JoinedDebatePage() {
         return Date.now() - timestamp < 5 * 60 * 1000; // 5 minutes
     };
 
-    const handleVote = (id) => {
-        // Prevent voting twice
-        if (userVotes[id]) return;
+    const handleVote = (id, isClosed) => {
+        if (isClosed) return; // disable voting if debate closed
+        if (userVotes[id]) return; // prevent multiple votes
 
         const updatedArgs = argumentsList.map((arg) =>
             arg.id === id ? { ...arg, votes: arg.votes + 1 } : arg
@@ -79,16 +98,17 @@ export default function JoinedDebatePage() {
             <h1 className="text-2xl font-bold mb-6 text-center">Your Joined Debates</h1>
 
             {joinedDebates.length === 0 ? (
-                <p className="text-gray-600 text-center">
-                    You haven’t joined any debates yet.
-                </p>
+                <p className="text-gray-600 text-center">You haven’t joined any debates yet.</p>
             ) : (
                 <ul className="space-y-6">
                     {joinedDebates.map((debate, index) => {
-                        // Show all arguments in the same debate (regardless of user)
+                        // Show all arguments in the same debate
                         const relatedArgs = argumentsList.filter(
                             (arg) => arg.debateId === debate.debateId
                         );
+
+                        // For now, no countdown or isClosed logic, so assume debate is open
+                        const isClosed = false;
 
                         return (
                             <li key={index} className="border rounded p-4 bg-gray-50">
@@ -96,9 +116,10 @@ export default function JoinedDebatePage() {
                                 <p><strong>Debate ID:</strong> {debate.debateId}</p>
                                 <p><strong>Side:</strong> {debate.side}</p>
                                 <p className="text-sm text-gray-500">
-                                    <strong>Joined at:</strong>{" "}
-                                    {new Date(debate.joinedAt).toLocaleString()}
+                                    <strong>Joined at:</strong> {new Date(debate.joinedAt).toLocaleString()}
                                 </p>
+
+                                {/* Removed countdown display */}
 
                                 {relatedArgs.length > 0 && (
                                     <div className="mt-4">
@@ -142,9 +163,9 @@ export default function JoinedDebatePage() {
                                                             <div className="flex justify-between items-center mt-1 text-sm">
                                                                 <span>Votes: {arg.votes}</span>
                                                                 <div className="flex gap-3">
-                                                                    {!userVotes[arg.id] && (
+                                                                    {!userVotes[arg.id] && !isClosed && (
                                                                         <button
-                                                                            onClick={() => handleVote(arg.id)}
+                                                                            onClick={() => handleVote(arg.id, isClosed)}
                                                                             className="text-purple-600 hover:underline"
                                                                         >
                                                                             Vote
@@ -153,9 +174,7 @@ export default function JoinedDebatePage() {
                                                                     {canEdit(arg.timestamp) && (
                                                                         <>
                                                                             <button
-                                                                                onClick={() =>
-                                                                                    handleEdit(arg.id, arg.text)
-                                                                                }
+                                                                                onClick={() => handleEdit(arg.id, arg.text)}
                                                                                 className="text-blue-500 hover:underline"
                                                                             >
                                                                                 Edit
@@ -181,9 +200,11 @@ export default function JoinedDebatePage() {
                                 <div className="mt-4 text-right">
                                     <button
                                         onClick={() =>
-                                            handlePostArgument(debate.debateId, debate.side, debate.name)
+                                            handlePostArgument(debate.debateId, debate.side, debate.name, isClosed)
                                         }
-                                        className="text-blue-600 hover:text-blue-800 cursor-pointer text-sm font-medium"
+                                        className={`text-blue-600 cursor-pointer text-sm font-medium ${isClosed ? "opacity-50 cursor-not-allowed" : "hover:text-blue-800"
+                                            }`}
+                                        disabled={isClosed}
                                     >
                                         Post your argument
                                     </button>
